@@ -10,13 +10,26 @@ process.chdir("/app"); // 🔑 FORCE cwd
 
 console.log("[supervisor] ensuring git repo");
 
-if (!fs.existsSync(".git")) {
-  execSync("git init", { stdio: "inherit", cwd: "/app" });
-  execSync(`git remote add origin ${REPO_URL}`, { stdio: "inherit", cwd: "/app" });
-  execSync("git fetch origin --depth=1", { stdio: "inherit", cwd: "/app" });
-  execSync(`git reset --hard origin/${BRANCH}`, { stdio: "inherit", cwd: "/app" });
-  execSync("git clean -fd", { stdio: "inherit", cwd: "/app" });
+if (!REPO_URL) {
+  console.error("[supervisor] Missing REPO_URL env var");
+  process.exit(1);
 }
+
+const run = (cmd) => execSync(cmd, { stdio: "inherit", cwd: "/app" });
+
+if (!fs.existsSync(".git")) {
+  run("git init");
+}
+
+try {
+  run(`git remote add origin ${REPO_URL}`);
+} catch (_) {
+  run(`git remote set-url origin ${REPO_URL}`);
+}
+
+run(`git fetch origin ${BRANCH} --depth=1`);
+run(`git checkout -B ${BRANCH} origin/${BRANCH}`);
+run("git clean -fd");
 
 console.log("[supervisor] static preview running");
 

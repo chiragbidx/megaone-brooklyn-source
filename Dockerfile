@@ -1,10 +1,11 @@
-FROM node:20
+FROM node:20-alpine
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# minimal deps for git-based hot reload
+RUN apk add --no-cache git
 
-COPY . .
+COPY . /app
 
 EXPOSE 8080
 
